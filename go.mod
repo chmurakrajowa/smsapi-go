@@ -1,4 +1,4 @@
-module github.com/smsapi/smsapi-go
+module github.com/chmurakrajowa/smsapi-go
 
 go 1.13
 
