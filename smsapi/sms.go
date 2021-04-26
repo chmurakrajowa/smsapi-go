@@ -3,6 +3,7 @@ package smsapi
 import "context"
 
 type Sms struct {
+	MsgID   string `json:"-"`
 	To      string `json:"to,omitempty"`
 	Message string `json:"message,omitempty"`
 	From    string `json:"from,omitempty"`
@@ -62,7 +63,7 @@ type SmsApi struct {
 func (smsApi *SmsApi) SendRaw(ctx context.Context, sms *Sms) (*SmsResultCollection, error) {
 	var result = new(SmsResultCollection)
 
-	err := smsApi.client.LegacyPost(ctx, "/sms.do", result, sms)
+	err := smsApi.client.LegacyPostWithID(ctx, "/sms.do", result, sms, sms.MsgID)
 
 	return result, err
 }

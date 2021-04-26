@@ -123,6 +123,23 @@ func (client *Client) NewJsonRequest(method, path string, body interface{}) (*ht
 	return client.NewRequest(method, path, buf, ContentTypeJson)
 }
 
+func (client *Client) NewJsonRequestWithID(method, path string, body interface{}, msgID string) (*http.Request, error) {
+	var buf io.ReadWriter
+
+	if body != nil {
+		buf = new(bytes.Buffer)
+
+		encoder := json.NewEncoder(buf)
+		err := encoder.Encode(body)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return client.NewRequestWithID(method, path, buf, ContentTypeJson, msgID)
+}
+
 func (client *Client) NewRequest(method, path string, buf io.Reader, contentType ContentType) (*http.Request, error) {
 	u, err := client.BaseUrl.Parse(path)
 
@@ -139,6 +156,26 @@ func (client *Client) NewRequest(method, path string, buf io.Reader, contentType
 	req.Header.Set("Content-Type", string(contentType))
 	req.Header.Set("Authorization", client.Auth.String())
 	req.Header.Set("User-Agent", fmt.Sprintf("%s/%s", Name, Version))
+
+	return req, nil
+}
+
+func (client *Client) NewRequestWithID(method, path string, buf io.Reader, contentType ContentType, msgID string) (*http.Request, error) {
+	u, err := client.BaseUrl.Parse(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(method, u.String(), buf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", string(contentType))
+	req.Header.Set("Authorization", client.Auth.String())
+	req.Header.Set("User-Agent", fmt.Sprintf("%s/%s/%s", Name, Version, msgID))
 
 	return req, nil
 }
@@ -191,6 +228,18 @@ func (client *Client) LegacyPost(ctx context.Context, path string, result interf
 	path, _ = addQueryParams(path, legacyQueryParams)
 
 	req, err := client.NewJsonRequest("POST", path, data)
+
+	if err != nil {
+		return err
+	}
+
+	return client.executeRequest(ctx, req, result)
+}
+
+func (client *Client) LegacyPostWithID(ctx context.Context, path string, result interface{}, data interface{}, msgID string) error {
+	path, _ = addQueryParams(path, legacyQueryParams)
+
+	req, err := client.NewJsonRequestWithID("POST", path, data, msgID)
 
 	if err != nil {
 		return err
