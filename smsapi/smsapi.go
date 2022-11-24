@@ -208,6 +208,36 @@ func (client *Client) executeRequest(ctx context.Context, req *http.Request, v i
 	return err
 }
 
+func (client *Client) executeRequestWithResponseRawData(ctx context.Context, req *http.Request, v interface{}) error {
+	req = req.WithContext(ctx)
+
+	resp, err := client.httpClient.Do(req)
+
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	responseData, err := client.CheckError(resp)
+	fmt.Printf("%s", responseData)
+	fmt.Println(responseData)
+
+	if err != nil {
+		return err
+	}
+
+	if v == nil {
+		return nil
+	}
+
+	responseDataReader := bytes.NewReader(responseData)
+
+	err = json.NewDecoder(responseDataReader).Decode(v)
+
+	return err
+}
+
 var legacyQueryParams = struct {
 	Format string `url:"format"`
 }{Format: "json"}
