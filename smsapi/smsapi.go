@@ -180,13 +180,13 @@ func (client *Client) NewRequestWithID(method, path string, buf io.Reader, conte
 	return req, nil
 }
 
-func (client *Client) executeRequest(ctx context.Context, req *http.Request, v interface{}) error {
+func (client *Client) executeRequest(ctx context.Context, req *http.Request, v interface{}) ([]byte, error) {
 	req = req.WithContext(ctx)
 
 	resp, err := client.httpClient.Do(req)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer resp.Body.Close()
@@ -194,7 +194,37 @@ func (client *Client) executeRequest(ctx context.Context, req *http.Request, v i
 	responseData, err := client.CheckError(resp)
 
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	if v == nil {
+		return nil
+	}
+
+	responseDataReader := bytes.NewReader(responseData)
+
+	err = json.NewDecoder(responseDataReader).Decode(v)
+
+	return err
+}
+
+func (client *Client) executeRequestWithResponseRawData(ctx context.Context, req *http.Request, v interface{}) ([]byte, error) {
+	req = req.WithContext(ctx)
+
+	resp, err := client.httpClient.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	responseData, err := client.CheckError(resp)
+	fmt.Printf("%s", responseData)
+	fmt.Println(responseData)
+
+	if err != nil {
+		return nil, err
 	}
 
 	if v == nil {
@@ -245,7 +275,7 @@ func (client *Client) LegacyPostWithID(ctx context.Context, path string, result 
 		return err
 	}
 
-	return client.executeRequest(ctx, req, result)
+	return client.executeRequestWithResponseRawData(ctx, req, result)
 }
 
 func (client *Client) Get(ctx context.Context, path string, result interface{}) error {
