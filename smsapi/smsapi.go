@@ -275,7 +275,7 @@ func (client *Client) LegacyPostWithID(ctx context.Context, path string, result 
 		return err
 	}
 
-	return client.executeRequest(ctx, req, result)
+	return client.executeRequestWithResponseRawData(ctx, req, result)
 }
 
 func (client *Client) Get(ctx context.Context, path string, result interface{}) error {
